@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { DashboardSidebar } from './DashboardSidebar';
 import { DashboardHeader } from './DashboardHeader';
 import type { DashboardTab } from '../../types';
@@ -9,6 +9,7 @@ import { DatasetsView } from './views/DatasetsView';
 import { KnowledgeGraphView } from './views/KnowledgeGraphView';
 import { AnalyticsView } from './views/AnalyticsView';
 import { EvalLabView } from './views/EvalLabView';
+import { JudgeDemoWizard } from './JudgeDemoWizard';
 
 interface DashboardLayoutProps {
   activeTab: DashboardTab;
@@ -19,6 +20,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   activeTab,
   setActiveTab,
 }) => {
+  const [showJudgeDemo, setShowJudgeDemo] = useState<boolean>(false);
+  const [demoQuery, setDemoQuery] = useState<string | null>(null);
+
   const getTabTitle = (tab: DashboardTab) => {
     switch (tab) {
       case 'overview': return 'Platform Overview';
@@ -32,12 +36,21 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     }
   };
 
+  const handleRunDemoQuery = (query: string) => {
+    setDemoQuery(query);
+  };
+
   const renderActiveView = () => {
     switch (activeTab) {
       case 'overview':
-        return <OverviewView setActiveTab={setActiveTab} />;
+        return (
+          <OverviewView
+            setActiveTab={setActiveTab}
+            onLaunchJudgeDemo={() => setShowJudgeDemo(true)}
+          />
+        );
       case 'ask':
-        return <AskKnowledgeView />;
+        return <AskKnowledgeView initialQuery={demoQuery} />;
       case 'documents':
         return <DocumentsView />;
       case 'datasets':
@@ -49,7 +62,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       case 'eval-lab':
         return <EvalLabView />;
       default:
-        return <OverviewView setActiveTab={setActiveTab} />;
+        return (
+          <OverviewView
+            setActiveTab={setActiveTab}
+            onLaunchJudgeDemo={() => setShowJudgeDemo(true)}
+          />
+        );
     }
   };
 
@@ -58,12 +76,23 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       <DashboardSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
       
       <div className="flex-1 flex flex-col min-w-0">
-        <DashboardHeader title={getTabTitle(activeTab)} />
+        <DashboardHeader
+          title={getTabTitle(activeTab)}
+          onLaunchJudgeDemo={() => setShowJudgeDemo(true)}
+        />
         
         <main className="flex-1 p-6 sm:p-8 max-w-7xl w-full mx-auto space-y-6">
           {renderActiveView()}
         </main>
       </div>
+
+      {/* JUDGE DEMO WIZARD MODAL */}
+      <JudgeDemoWizard
+        isOpen={showJudgeDemo}
+        onClose={() => setShowJudgeDemo(false)}
+        setActiveTab={setActiveTab}
+        onRunQuery={handleRunDemoQuery}
+      />
     </div>
   );
 };
